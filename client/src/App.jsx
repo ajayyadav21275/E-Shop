@@ -1,5 +1,5 @@
-import Footer from "./Components/Layout/Footer";
-import Navbar from "./Components/layout/navbar";
+import Footer from "./Components/layout/Footer";
+import Navbar from "./Components/layout/Navbar";
 import AppRoutes from "./Routes/AppRoutes";
 
 
