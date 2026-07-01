@@ -4,7 +4,10 @@ import {
   addToOrder,
   getOrderById,
   getAdminOrder,
-  updateOrder
+  updateOrder,
+  razorpayOrder,
+  deleteOrder
+  
 } from "../../api/orderApi";
 
 const orderSlice = createSlice({
@@ -14,6 +17,7 @@ const orderSlice = createSlice({
     orders: [],
     currentOrder: null,
     adminOrders: [],
+    razorpayOrder: null,
     loading: false,
     error: null,
   },
@@ -21,7 +25,6 @@ const orderSlice = createSlice({
   reducers: {},
 
   extraReducers: (builder) => {
-
     // ---------------- CREATE ORDER ----------------
     builder
       .addCase(addToOrder.pending, (state) => {
@@ -33,6 +36,21 @@ const orderSlice = createSlice({
         state.currentOrder = action.payload.order;
       })
       .addCase(addToOrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // ---------------- CREATE RAZORPAY ORDER ----------------
+    builder
+      .addCase(razorpayOrder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(razorpayOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        state.razorpayOrder = action.payload.order;
+      })
+      .addCase(razorpayOrder.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
@@ -78,18 +96,23 @@ const orderSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
-      //................Admin update order................//
-      builder.addCase(updateOrder.fulfilled, (state, action) => {
 
-  const order = state.adminOrders.find(
-    (item) => item.id === action.payload.id
+    // ---------------- UPDATE ORDER ----------------
+    builder.addCase(updateOrder.fulfilled, (state, action) => {
+      const order = state.adminOrders.find(
+        (item) => item.id === action.payload.id
+      );
+
+      if (order) {
+        order.status = action.payload.status;
+      }
+    });
+    builder.addCase(deleteOrder.fulfilled, (state, action) => {
+  state.adminOrders = state.adminOrders.filter(
+    (item) => item.id !== action.payload.data.id
   );
-
-  if (order) {
-    order.status = action.payload.status;
-  }
-
 });
+    
   },
 });
 

@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import {getOrderById } from "../api/orderApi";
+import {getOrderById , deleteOrder} from "../api/orderApi";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+  import Swal from "sweetalert2";
 function OrderDetails() {
     const {orderId} = useParams();
   const navigate = useNavigate();
@@ -30,7 +31,45 @@ function OrderDetails() {
   }
 
   const items = order.items || [];
+      // DELETE ORDER //
 
+  
+
+const handleDeleteOrder = async (id) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "You won't be able to recover this order!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, Delete it!",
+    cancelButtonText: "Cancel",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    await dispatch(deleteOrder(id)).unwrap();
+
+    Swal.fire({
+      icon: "success",
+      title: "Deleted!",
+      text: "Order deleted successfully.",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+
+    navigate("/orders"); // ya admin orders page
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error!",
+      text: error.message || "Failed to delete order.",
+    });
+  }
+};
+        
   return (
     <div className="container py-4">
 
@@ -117,6 +156,14 @@ function OrderDetails() {
           onClick={() => navigate("/orders")}
         >
           ← Back to Orders
+        </button>
+      </div>
+       <div className="d-flex justify-content-end mt-3">
+        <button
+          className="btn btn-danger"
+        onClick={() => handleDeleteOrder(order.id)}
+        >
+          Delete Order
         </button>
       </div>
 

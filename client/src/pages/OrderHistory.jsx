@@ -8,7 +8,7 @@ function OrderHistory() {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
   const orders = useSelector((state) => state.order.orders);
-
+ console.log(orders);
 
   const userId = Number(localStorage.getItem("userId"));
 
@@ -35,11 +35,19 @@ function OrderHistory() {
             <p>Total Amount: ₹{order.total}</p>
 
             <p>
-              Status:
+              Order-Status:
               <span className="badge bg-warning ms-2">
                 {order.status}
               </span>
             </p>
+            <p>
+              Payment-Status:
+              <span className="badge bg-warning ms-2">
+                {order.payment_status}
+              </span>
+            </p>
+
+             
 
             <button className="btn btn-primary" onClick={()=>navigate(`/orderDetails/${order.id}`)}>
               View Details

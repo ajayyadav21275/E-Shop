@@ -1,12 +1,15 @@
-const Pool = require("../config/db");
 
+const Pool = require("../config/db");
+const razorpay = require("../config/razorpay..db");
+const crypto = require("crypto");
 
 const createOrder = async (req, res) => {
    
   try {
     const { user_id, address_id, total, payment_Method,
-      razorpay_order_id, rezorpay_payment_id,razorpay_signature,currency,status,
+      razorpay_order_id, razorpay_payment_id,razorpay_signature,currency,status,
       items = [] } = req.body;
+      console.log(req.body);
     const orderUserId = user_id;
      const  payment_method = payment_Method;
     if (!orderUserId) {
@@ -66,18 +69,33 @@ const createOrder = async (req, res) => {
      // payment_Method Status Save //
 
 
+    const paymentResult = await Pool.query(
+      `INSERT INTO payments 
+       (order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature, payment_method, status, currency)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        order_id,
+        razorpay_order_id || null,
+        razorpay_payment_id || null,
+        razorpay_signature || null,
+        payment_method || "cod",
+        payment_method === "razorpay" ? "paid" : "pending",
+        "INR",
+      ]
+
+    );
+ 
+    // 3. clear cart
     await Pool.query(
-  `INSERT INTO payments 
-   (order_id, payment_method, status, currency)
-   VALUES ($1, $2, $3, $4)
-   RETURNING *`,
-  [
-    order_id,
-    "cod",
+      `DELETE FROM cart WHERE users_id = $1`,
+      [orderUserId]
+    );
+    [
     "pending",
     "INR"
   ]
-);
+
  
     // 3. clear cart
     await Pool.query(
@@ -89,6 +107,7 @@ const createOrder = async (req, res) => {
       success: true,
       message: "Order placed successfully",
       order: order.rows[0],
+      payment: paymentResult.rows[0],
     });
 
   } catch (err) {
@@ -102,10 +121,28 @@ const getOrders = async (req, res) => {
   try {
     const { user_id } = req.params;
     
-    const result = await Pool.query(
-      `SELECT * FROM orders WHERE user_id = $1`,
-      [user_id]
-    );
+   const result = await Pool.query(
+  `
+  SELECT
+    o.id,
+    o.user_id,
+    o.total,
+    o.status,
+
+    py.payment_method,
+    py.status AS payment_status
+
+  FROM orders o
+
+  LEFT JOIN payments py
+  ON o.id = py.order_id
+
+  WHERE o.user_id = $1
+
+  ORDER BY o.id DESC
+  `,
+  [user_id]
+);
 
     res.json(result.rows);
   } catch (err) {
@@ -135,9 +172,12 @@ const getAllOrders = async (req, res) => {
     p.title,
     p.image,
 
+    py.status AS payment_status,
+    py.payment_method,
+
     u.name AS user_name,
     a.name AS delivery_name
-
+    
 FROM orders o
 
 LEFT JOIN orderitem oi 
@@ -152,6 +192,9 @@ ON o.user_id = u.id
 LEFT JOIN address a
 ON o.address_id = a.id
 
+LEFT JOIN payments py
+ON o.id = py.order_id
+
 ORDER BY o.id DESC`
 );
  
@@ -163,7 +206,7 @@ ORDER BY o.id DESC`
     id: row.id,
     total: row.total,
     status: row.status,
-
+    payment_status: row.payment_status,
     user_name: row.user_name,
     delivery_name: row.delivery_name,
 
@@ -196,11 +239,17 @@ const DeleteOrder = async (req, res) => {
   try {
     const id  = req.params.id;
 
-    const result = await Pool.query(
+
+      // Update stock for each item in the order//
+       for (let item of result.rows) {
+        await Pool.query(`UPDATE product_variants SET stock = stock + $1 WHERE id = $2`, [item.quantity, item.product_id]);
+         const result = await Pool.query(
       "DELETE FROM orders WHERE id = $1 RETURNING *",
       [id]
     );
-
+       }
+   
+     
     if (result.rows.length === 0) {
       return res.status(404).json({
 
@@ -343,4 +392,74 @@ const updateOrderStatus = async (req, res ) => {
 
 };
 
-module.exports = {createOrder,getOrders,DeleteOrder, getOrderById, getAllOrders, updateOrderStatus};
+// CREATE RAZORPAY ORDER //
+
+const createRazorpayOrder = async (req, res) => {
+  try {
+    const { total } = req.body;
+
+    const amount = Number(total);
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid total amount is required",
+      });
+    }
+
+    const options = {
+      amount: amount * 100, // paise
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    return res.status(200).json({
+      success: true,
+      message: "Razorpay order created successfully",
+      order,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+// payment verification //
+const verifyPayment = async (req,res)=>{
+  try{
+    const {razorpay_order_id,
+       razorpay_payment_id,
+        razorpay_signature} =req.body;
+
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSignature = crypto.createHmac('sha256',process.env.RAZORPAY_KEY_SECRET)
+          .update(body)
+          .digest('hex');
+        if(expectedSignature ===razorpay_signature){
+          return res.status(200).json({
+            success:true,
+            message:"Signature is valid"
+          });
+                }
+                else{
+          return res.status(400).json({
+             success:false,
+            message:"Signature is invalid"
+                })
+
+        }
+        
+  }
+  catch(error){
+    return res.status(500).json({
+      success:false,
+      message:error.message
+    });
+}
+}
+module.exports = {createOrder,getOrders,DeleteOrder, getOrderById, getAllOrders, updateOrderStatus, createRazorpayOrder,verifyPayment};

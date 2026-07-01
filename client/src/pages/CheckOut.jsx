@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getCart } from "../api/CartApi";
-import { addToOrder } from "../api/orderApi";
+import { addToOrder, razorpayOrder, razorpayVerifyPayment } from "../api/orderApi";
 import { addAddress } from "../api/addressApi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -68,7 +68,7 @@ function CheckOut() {
     }
   };
 
-  const handlePlaceOrder = async (addressId) => {
+  const handlePlaceOrder = async (addressId, paymentInfo = {}) => {
     if (!currentUser) {
       toast.error("Please login first to place an order.");
       navigate("/login");
@@ -76,10 +76,12 @@ function CheckOut() {
     }
 
     const orderData = {
-      user_id: userId,   
-      address_id: addressId,   
-       payment_Method:paymentMethod,
-
+      user_id: userId,
+      address_id: addressId,
+      payment_Method: paymentMethod,
+      razorpay_order_id: paymentInfo.razorpay_order_id || null,
+      razorpay_payment_id: paymentInfo.razorpay_payment_id || null,
+      razorpay_signature: paymentInfo.razorpay_signature || null,
       items: cartItems.map((item) => ({
         product_id: item.product_id || item.id,
         quantity: item.quantity,
@@ -101,16 +103,76 @@ function CheckOut() {
   };
 
   const handleCheckout = async () => {
-     const addressId = await handleSaveAddress();
-       
-if(!addressId) return 
-     
-   await handlePlaceOrder(addressId);
+  const addressId = await handleSaveAddress();
 
-  navigate("/orders");
+  if (!addressId) return;
+
+  if (paymentMethod === "cod") {
+    await handlePlaceOrder(addressId);
+    navigate("/orders");
+  } else {
+    await openRazorpay({ addressId });
+  }
 };
 
-const [paymentMethod, setPaymentMethod] = useState("rezorpay")
+const [paymentMethod, setPaymentMethod] = useState("razorpay")
+
+// open razorpay//
+
+
+const openRazorpay = async ({addressId,paymentResponse=null}) => {
+  try {
+    const data = await dispatch(razorpayOrder(total)).unwrap();
+
+    const order = data.order;
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+
+      amount: order.amount,
+
+      currency: order.currency,
+
+      order_id: order.id,
+
+      name: "E-Commerce",
+
+      description: "Order Payment",
+
+      prefill: {
+        name: address.name,
+        contact: address.phone,
+      },
+
+      handler: async function (response) {
+        
+        const verify = await dispatch(
+          razorpayVerifyPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          })
+        ).unwrap();
+
+        if (verify.success) {
+          await handlePlaceOrder(addressId, response);
+          toast.success("Payment Successful 🎉");
+          navigate("/orders");
+        } else {
+          toast.error("Payment Verification Failed");
+        }
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+
+    rzp.open();
+  } catch (err) {
+    console.log(err);
+
+    toast.error("Payment Failed");
+  }
+};
   return (
     <div className="container py-4">
       <h2 className="mb-4">Checkout Page</h2>

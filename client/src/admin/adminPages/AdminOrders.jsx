@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 function AdminOrders() {
 const navigate = useNavigate();
   const orders = useSelector((state) => state.order.adminOrders);
- 
+ console.log(orders);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -65,6 +65,20 @@ const navigate = useNavigate();
       </select>  
       
     },
+    {
+  name: "Payment Status",
+  cell: (row) => (
+    <span
+      className={`badge ${
+        row.payment_status === "paid"
+          ? "bg-success"
+          : "bg-warning"
+      }`}
+    >
+      {row.payment_status}
+    </span>
+  ),
+},
 
     {
       name: "Products",
@@ -101,6 +115,7 @@ const navigate = useNavigate();
                <small>
                 Price: {item.price}
               </small>
+
 
             </div>
 

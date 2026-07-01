@@ -20,6 +20,42 @@ export const addToOrder = createAsyncThunk(
     }
   }
 );
+ // RAZORPAY ORDER//
+export const razorpayOrder = createAsyncThunk(
+  "order/razorpayOrder",
+  async (total, { rejectWithValue }) => {
+    try {
+      const res = await Api.post(
+        "/order/createRazorpayOrder",
+        {
+          total: total,
+        }
+      );
+
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// VERIFY PAYMENT //
+
+export const razorpayVerifyPayment = createAsyncThunk(
+  "order/verifyPayment",
+  async (paymentData, { rejectWithValue }) => {
+    try {
+      const res = await Api.post(
+        "/order/verifyPayment",
+        paymentData
+      );
+
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
   // get order//
 export const getOrder = createAsyncThunk(
   "order/getOrder",
@@ -72,3 +108,13 @@ export const getAdminOrder = createAsyncThunk(
   }
 
 );
+
+export const deleteOrder = createAsyncThunk("/order/deleteOrder",
+  async (id) => {
+   console.log(id)
+      const res = await Api.delete(`/order/delete/${id}`);
+      return res.data;
+    
+  
+    })
+
