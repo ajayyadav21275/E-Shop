@@ -33,7 +33,7 @@ const getAllCategories = async (req,res)=>{
 const getCategoryById = async (req, res) => {
     const id = req.params.id || null;
     const name= req.body || null
- console.log("name:",name)
+ 
     try {
       if(id){
             const result = await Pool.query(`SELECT * FROM categories WHERE id = $1`, [id]);
@@ -121,7 +121,7 @@ const updateCategories = async (req, res) => {
   } catch (err) {
     console.log(err);
 
-    // Error aaya to new uploaded image delete kar do
+    // error aaya to new uploaded image delete kar do
     if (newImage) {
       const newImagePath = path.join(
         __dirname,

@@ -163,7 +163,7 @@ const handleDeleteOrder = async (id) => {
           className="btn btn-danger"
         onClick={() => handleDeleteOrder(order.id)}
         >
-          Delete Order
+          Cancel Order
         </button>
       </div>
 

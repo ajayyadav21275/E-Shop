@@ -8,7 +8,7 @@ function OrderHistory() {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
   const orders = useSelector((state) => state.order.orders);
- console.log(orders);
+ 
 
   const userId = Number(localStorage.getItem("userId"));
 

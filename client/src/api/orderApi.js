@@ -111,7 +111,7 @@ export const getAdminOrder = createAsyncThunk(
 
 export const deleteOrder = createAsyncThunk("/order/deleteOrder",
   async (id) => {
-   console.log(id)
+   
       const res = await Api.delete(`/order/delete/${id}`);
       return res.data;
     

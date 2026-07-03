@@ -3,13 +3,15 @@ const Pool = require("../config/db");
 const razorpay = require("../config/razorpay..db");
 const crypto = require("crypto");
 
-const createOrder = async (req, res) => {
+    const createOrder = async (req, res) => {
    
   try {
+    await Pool.query("BEGIN");
+
     const { user_id, address_id, total, payment_Method,
       razorpay_order_id, razorpay_payment_id,razorpay_signature,currency,status,
       items = [] } = req.body;
-      console.log(req.body);
+      
     const orderUserId = user_id;
      const  payment_method = payment_Method;
     if (!orderUserId) {
@@ -54,6 +56,7 @@ const createOrder = async (req, res) => {
           item.price,
         ]
       );
+    
        // stock Update //
   const stockResult =   await Pool.query(`UPDATE product_variants SET stock= stock- $1
            WHERE product_id = $2 
@@ -66,6 +69,7 @@ const createOrder = async (req, res) => {
   });
 }
     }
+     
      // payment_Method Status Save //
 
 
@@ -91,18 +95,7 @@ const createOrder = async (req, res) => {
       `DELETE FROM cart WHERE users_id = $1`,
       [orderUserId]
     );
-    [
-    "pending",
-    "INR"
-  ]
-
- 
-    // 3. clear cart
-    await Pool.query(
-      `DELETE FROM cart WHERE users_id = $1`,
-      [orderUserId]
-    );
-
+    await Pool.query("COMMIT");
     res.json({
       success: true,
       message: "Order placed successfully",
@@ -111,6 +104,7 @@ const createOrder = async (req, res) => {
     });
 
   } catch (err) {
+    await Pool.query("ROLLBACK");
     res.status(500).json({
       success: false,
       message: err.message,
@@ -234,48 +228,94 @@ ORDER BY o.id DESC`
     res.status(500).json({ message: err.message });
   }
 };
-
 const DeleteOrder = async (req, res) => {
   try {
-    const id  = req.params.id;
+    const id = req.params.id;
 
+    await client.query("BEGIN");
 
-      // Update stock for each item in the order//
-       for (let item of result.rows) {
-        await Pool.query(`UPDATE product_variants SET stock = stock + $1 WHERE id = $2`, [item.quantity, item.product_id]);
-         const result = await Pool.query(
-      "DELETE FROM orders WHERE id = $1 RETURNING *",
+    const paymentResult = await client.query(
+      `SELECT payment_method, razorpay_payment_id
+       FROM payments
+       WHERE order_id = $1`,
       [id]
     );
-       }
-   
-     
-    if (result.rows.length === 0) {
-      return res.status(404).json({
 
-        message: "Order not found"
+    const paymentRow = paymentResult.rows[0];
+    const paymentMethod = paymentRow?.payment_method;
+
+    const itemsResult = await client.query(
+      `SELECT product_id, quantity
+       FROM orderitem
+       WHERE order_id = $1`,
+      [id]
+    );
+
+    if (itemsResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({
+        message: "Order not found",
       });
     }
 
-    res.status(200).json({
-      message: "Order deleted successfully",
-      data: result.rows[0]
-    });
+    for (const item of itemsResult.rows) {
+      await client.query(
+        `UPDATE product_variants
+         SET stock = stock + $1
+         WHERE product_id = $2`,
+        [item.quantity, item.product_id]
+      );
+    }
 
-  } catch (error) {
-    res.status(500).json({
-  
-      message: "Internal Server Error"
+    if (paymentMethod === "razorpay" && paymentRow?.razorpay_payment_id) {
+      try {
+        await razorpay.payments.refund(paymentRow.razorpay_payment_id, {
+          notes: { reason: "Order cancellation" },
+        });
+      } catch (refundError) {
+        console.error("Refund failed:", refundError);
+      }
+    }
+
+    await client.query(`DELETE FROM orderitem WHERE order_id = $1`, [id]);
+    await client.query(`DELETE FROM payments WHERE order_id = $1`, [id]);
+
+    const del = await client.query(
+      `DELETE FROM orders
+       WHERE id = $1
+       RETURNING *`,
+      [id]
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({
+      message: paymentMethod === "razorpay"
+        ? "Order deleted and stock restored successfully"
+        : "Order deleted successfully",
+      data: del.rows[0],
     });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("DeleteOrder error:", error);
+
+    return res.status(500).json({
+      message: error.message || "Internal Server Error",
+    });
+  } finally {
+    client.release();
   }
 };
+
+
+
 
 const getOrderById = async (req, res) => {
 
   try {
 
     const orderId = req.params.order_id || req.params.id;
-     console.log(orderId)
+    
     const result = await Pool.query(
       `
       SELECT

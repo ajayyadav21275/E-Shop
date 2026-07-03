@@ -11,6 +11,7 @@ function CheckOut() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector((state) => state.cart.cartItems);
+  console.log(cartItems.length);
   const user = useSelector((state) => state.user.user);
   const storedUser = JSON.parse(localStorage.getItem("userINFO") || "null");
   const currentUser = user ?? storedUser;

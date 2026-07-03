@@ -6,39 +6,38 @@ import { addToCart, getCart } from "../api/CartApi";
 import Swal from "sweetalert2";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 function ProductDetails() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const { id } = useParams();
   const dispatch = useDispatch();
   const product = useSelector((state) => state.products.product);
-const user = useSelector((state) => state.user.user);
-  
-    const handleAddToCart = async (product) => {
-  const userId =
-    user?.id || Number(localStorage.getItem("userId")) || 1;
+  const user = useSelector((state) => state.user.user);
 
-  try {
-    await dispatch(
-      addToCart({
-        userId,
-        productId: product.id,
-        quantity: 1,
-      })
-    ).unwrap();
+  const handleAddToCart = async (product, redirectTo = "/cart") => {
+    const userId = user?.id || Number(localStorage.getItem("userId")) || 1;
 
-    await dispatch(getCart(userId));
-    navigate("/cart");
-  } catch (err) {
-    console.error("Add to cart failed", err);
+    try {
+      await dispatch(
+        addToCart({
+          userId,
+          productId: product.id,
+          quantity: 1,
+        })
+      ).unwrap();
 
-    const msg = err.response?.data?.message || err.message;
+      await dispatch(getCart(userId));
+      navigate(redirectTo);
+    } catch (err) {
+      console.error("Add to cart failed", err);
 
-    Swal.fire({
-      icon: "error",
-      title: "Add to cart failed",
-      text: msg,
-    });
-  }
-};
+      const msg = err.response?.data?.message || err.message;
+
+      Swal.fire({
+        icon: "error",
+        title: "Add to cart failed",
+        text: msg,
+      });
+    }
+  };
   useEffect(() => {
     dispatch(getProductById(id));
   }, [dispatch, id]);
@@ -90,8 +89,11 @@ const user = useSelector((state) => state.user.user);
     Add To Cart
   </button>
 
-  <button className="btn btn-success" onClick={()=>navigate("/checkout")}>
-     Proceed to Checkout →
+  <button
+    className="btn btn-success"
+    onClick={() => handleAddToCart(product, "/checkout")}
+  >
+    Proceed to Checkout →
   </button>
 </div>
     </div>
