@@ -51,7 +51,7 @@ const user= useSelector((state)=>state.user.user)
       Swal.fire({
         toast: true,
         position: "top-end",
-        icon: "error",
+        icon: "Invalid email or password",
         title: error?.message || "Login failed",
         showConfirmButton: false,
         timer: 2000,

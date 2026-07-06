@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import Api from "../axios/Api";
 
 export const logIn = createAsyncThunk(
-  "userLogIn/logIn",
+  "users/logIn",
   async ({ email, password }) => {
     const res = await Api.post("/login", {
       email,
@@ -17,7 +17,7 @@ export const logIn = createAsyncThunk(
     return res.data;
   });
 
-  export const registerUser = createAsyncThunk("userRegister/register", 
+  export const registerUser = createAsyncThunk("users/register", 
     async (data) => {
      const res = await Api.post("/register",data);
      return res.data;

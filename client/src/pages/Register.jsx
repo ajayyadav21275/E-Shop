@@ -12,8 +12,8 @@ const Register = () => {
     register, handleSubmit, reset, formState: { errors }, } = useForm();
 
   const onSubmit = async (data) => {
-    dispatch(registerUser(data))
-     reset();
+    dispatch(registerUser({ ...data, role: "User" }));
+    reset();
   };
  
   return (
@@ -26,7 +26,7 @@ const Register = () => {
         </h2>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-
+          <input type="hidden" value="User" {...register("role")} />
 
           <input
             className="form-control mb-2"
