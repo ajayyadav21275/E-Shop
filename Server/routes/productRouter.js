@@ -10,4 +10,5 @@ ProductRouter.get("/:id", getProductById);
 ProductRouter.post("/add", upload.single("image"), createProduct);
 ProductRouter.delete("/:id", DeleteProduct);
 ProductRouter.put("/:id",upload.single("image"), updateProducts )
+
 module.exports = ProductRouter;

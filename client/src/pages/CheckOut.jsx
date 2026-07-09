@@ -7,11 +7,13 @@ import { addAddress } from "../api/addressApi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
  const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+ 
 function CheckOut() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector((state) => state.cart.cartItems);
-  console.log(cartItems.length);
+  
   const user = useSelector((state) => state.user.user);
   const storedUser = JSON.parse(localStorage.getItem("userINFO") || "null");
   const currentUser = user ?? storedUser;
@@ -35,8 +37,10 @@ function CheckOut() {
   }, [dispatch, userId]);
 
   const total = cartItems.reduce(
-    (sum, item) =>
-      sum + item.price * item.quantity,
+    (sum, item) => {
+      const finalPrice = item.price - (item.price * item.discount_percent) / 100;
+      return sum + finalPrice * item.quantity;
+    },
     0
   );
 
@@ -196,11 +200,20 @@ const openRazorpay = async ({addressId,paymentResponse=null}) => {
                   />
               
               <h5>{item.title}</h5>
-              <p>₹{item.price}</p>
+                <p className="fw-bold text-danger">
+                      ₹
+                      {(
+                        item.price -
+                        (item.price * item.discount_percent) / 100
+                      ).toFixed(2)}
+                    </p>
               <p>Qty: {item.quantity}</p>
               <p>
                 Subtotal: ₹
-                {item.price * item.quantity}
+                 {(
+                        item.price -
+                        (item.price * item.discount_percent) / 100
+                      ).toFixed(2)*item.quantity}
               </p>
 
             </div>

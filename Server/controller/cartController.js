@@ -49,6 +49,7 @@ const addToCart = async (req, res) => {
           p.title,
           p.image,
           pv.price,
+          pv.discount_percent,
           pv.stock,
           c.quantity
        FROM cart c
@@ -78,6 +79,7 @@ const getCart = async (req, res) => {
           p.title,
           p.image,
           pv.price,
+          pv.discount_percent,
           pv.stock,
           c.quantity
        FROM cart c
@@ -131,6 +133,7 @@ const updateFromCartQuantity = async (req, res) => {
           p.title,
           p.image,
           pv.price,
+          pv.discount_percent,
           pv.stock,
           c.quantity
        FROM cart c

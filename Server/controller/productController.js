@@ -65,7 +65,7 @@ const getProducts = async (req, res) => {
 const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
-
+    
     const result = await Pool.query(
       `SELECT
          p.id,

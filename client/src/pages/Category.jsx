@@ -10,7 +10,11 @@ function Category() {
 
   const categories =
     useSelector((state) => state.categories.categories) || [];
-
+   
+    const parentCategories = categories.filter(
+      (item)=> item.parent_id === null)
+      
+    
   useEffect(() => {
     dispatch(getCategories());
   }, [dispatch]);
@@ -68,7 +72,7 @@ function Category() {
           }}
         >
 
-          {categories.map((category) => (
+          {parentCategories.map((category) => (
             <div
               key={category.id}
               className="card border-0 shadow-sm"

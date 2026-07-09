@@ -23,9 +23,17 @@ const categorySlice = createSlice({
                 state.status = "failed";
                 state.error = action.error?.message;
             })
-            .addCase(getCategoryById.fulfilled, (state, action) => {
-                state.category = action.payload;
-            })
+           .addCase(getCategoryById.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getCategoryById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categoryById = action.payload;
+      })
+      .addCase(getCategoryById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
              .addCase(categoryUpdate.fulfilled, (state, action) => {
                 state.category = action.payload;
             });

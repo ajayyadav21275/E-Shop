@@ -30,10 +30,9 @@ const AppRoutes = () => {
 
       <Route path="/product" element={<Product />} />
 
-      <Route path="/product/:categoryId" element={<Product />} />
+      <Route path="/product/:parentId" element={<Product />} />
 
-      
-
+        <Route path="/productDetails/:category_id" element={<ProductDetails />} />
       
 
       <Route path="/cart" element={<Cart />} />

@@ -45,10 +45,8 @@ function OrderHistory() {
               <span className="badge bg-warning ms-2">
                 {order.payment_status}
               </span>
-            </p>
-
-             
-
+            </p>      
+            
             <button className="btn btn-primary" onClick={()=>navigate(`/orderDetails/${order.id}`)}>
               View Details
             </button>

@@ -14,17 +14,24 @@ export const getCategories = createAsyncThunk(
 
 
 export const getCategoryById = createAsyncThunk(
-  'categories/getCategoryById',
-  console.log("category_name:",name),
-  async (id) => {
-   
-    const response = await Api.get(`/categories/${id}`);
-    const data = response.data;
-    c
-    return data;
+  "categories/getCategoryById",
+  async ({ parentId, page = 1, search = "" }, { rejectWithValue }) => {
+    try {
+      
+
+      const response = await Api.get(
+        `/categories/${parentId}?page=${page}&limit=12&search=${search}`
+      );
+
+    
+
+      return response.data;
+    } catch (err) {
+      console.log("API Error:", err.response || err);
+      return rejectWithValue(err.response?.data || err.message);
+    }
   }
 );
-
 // Admin Create Category Api //
 export const addCategory = createAsyncThunk("categories/addCategory",
    async(data)=>{
@@ -36,7 +43,7 @@ export const addCategory = createAsyncThunk("categories/addCategory",
 
 export const deleteCategory = createAsyncThunk("categories,deleteCategory", 
   async(id)=>{
-    console.log("category:",id)
+    
    const res = Api.delete(`/categories/del/${id}`);
    return res.data
   }

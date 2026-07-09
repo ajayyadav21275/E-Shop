@@ -11,7 +11,9 @@ function AdminCategoryList() {
 
   const categories =
     useSelector((state) => state.categories.categories) || [];
-
+    const parentCategories = categories.filter(
+  (item) => item.parent_id === null
+);
   useEffect(() => {
     dispatch(getCategories());
   }, [dispatch]);
@@ -33,7 +35,7 @@ function AdminCategoryList() {
     formData.append("name", data.name);
     formData.append("slug", data.slug.toLowerCase());
     formData.append("description", data.description);
-
+    formData.append("parentCategory", data.parentCategory || null);
     if (data.image?.[0]) {
       formData.append("image", data.image[0]);
     }
@@ -110,7 +112,8 @@ const handleDelete = async (id) => {
       setValue("name", item.name)
       setValue("slug", item.slug)
       setValue("description", item.description)
-        setShowForm(true)
+      setValue("parentCategory", item.parentCategory)
+      setShowForm(true)
       
    }
   return (
@@ -177,6 +180,22 @@ const handleDelete = async (id) => {
               <small className="text-danger">
                 {errors.slug?.message}
               </small>
+            </div>
+
+             <div className="col-md-6 mb-3">
+              <label className="form-label">
+                Parent Category
+              </label>
+
+              <select className="form-control" {...register("parentCategory")}>
+                <option value="">None</option>
+
+    {parentCategories.map((item) => (
+        <option key={item.id} value={item.id}>
+            {item.name}
+        </option>
+    ))}
+</select>
             </div>
 
             <div className="col-md-12 mb-3">

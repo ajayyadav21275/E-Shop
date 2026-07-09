@@ -3,8 +3,9 @@ const Pool = require("../config/db");
 const razorpay = require("../config/razorpay..db");
 const crypto = require("crypto");
 
+const sendSMS = require("../config/twilio");
     const createOrder = async (req, res) => {
-   
+    console.log("Request Body:", req.body); 
   try {
     await Pool.query("BEGIN");
 
@@ -35,7 +36,7 @@ const crypto = require("crypto");
     );
 
     const order_id = order.rows[0]?.id;
-
+    const totalAmount=order.rows[0]?.total;
     if (!order_id) {
       return res.status(500).json({
         success: false,
@@ -89,8 +90,34 @@ const crypto = require("crypto");
       ]
 
     );
- 
+   
+//    const address = await Pool.query(
+//   `SELECT * FROM address WHERE id = $1`,
+//   [address_id]
+// );
+
+// if (address.rows.length === 0) {
+//   throw new Error("Address not found");
+// }
+
+// const { phone, name } = address.rows[0];
+
+// const sms = await sendSMS(
+//   phone,
+//   `Hi ${name},
+
+// Your Order #${order_id} has been placed successfully.
+
+// Total Amount: ₹${totalAmount}
+
+// Thank you for shopping with us!`
+// );
+
+// console.log("SMS sent:", sms);
+
     // 3. clear cart
+
+    
     await Pool.query(
       `DELETE FROM cart WHERE users_id = $1`,
       [orderUserId]
@@ -232,9 +259,9 @@ const DeleteOrder = async (req, res) => {
   try {
     const id = req.params.id;
 
-    await client.query("BEGIN");
+    
 
-    const paymentResult = await client.query(
+    const paymentResult = await Pool.query(
       `SELECT payment_method, razorpay_payment_id
        FROM payments
        WHERE order_id = $1`,
@@ -244,7 +271,7 @@ const DeleteOrder = async (req, res) => {
     const paymentRow = paymentResult.rows[0];
     const paymentMethod = paymentRow?.payment_method;
 
-    const itemsResult = await client.query(
+    const itemsResult = await Pool.query(
       `SELECT product_id, quantity
        FROM orderitem
        WHERE order_id = $1`,
@@ -259,7 +286,7 @@ const DeleteOrder = async (req, res) => {
     }
 
     for (const item of itemsResult.rows) {
-      await client.query(
+      await Pool.query(
         `UPDATE product_variants
          SET stock = stock + $1
          WHERE product_id = $2`,
@@ -277,17 +304,17 @@ const DeleteOrder = async (req, res) => {
       }
     }
 
-    await client.query(`DELETE FROM orderitem WHERE order_id = $1`, [id]);
-    await client.query(`DELETE FROM payments WHERE order_id = $1`, [id]);
+    await Pool.query(`DELETE FROM orderitem WHERE order_id = $1`, [id]);
+    await Pool.query(`DELETE FROM payments WHERE order_id = $1`, [id]);
 
-    const del = await client.query(
+    const del = await Pool.query(
       `DELETE FROM orders
        WHERE id = $1
        RETURNING *`,
       [id]
     );
 
-    await client.query("COMMIT");
+    await Pool.query("COMMIT");
 
     return res.status(200).json({
       message: paymentMethod === "razorpay"
@@ -296,14 +323,12 @@ const DeleteOrder = async (req, res) => {
       data: del.rows[0],
     });
   } catch (error) {
-    await client.query("ROLLBACK").catch(() => {});
+    
     console.error("DeleteOrder error:", error);
 
     return res.status(500).json({
       message: error.message || "Internal Server Error",
     });
-  } finally {
-    client.release();
   }
 };
 

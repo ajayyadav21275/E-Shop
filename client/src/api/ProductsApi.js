@@ -21,13 +21,14 @@ export const getProducts = createAsyncThunk(
 
 export const getProductById = createAsyncThunk(
   "products/getProductById",
-  async (id) => {
+  async (id,category_id) => {
     if(id){
           const response = await Api.get(`/products/${id}`);
     return response.data;
     }
     else if(category_id){
-      const response = await Api.get(`/products?categoryId=${category_id}`);
+      console.log("category:",category_id)
+      const response = await Api.get(`/productDetails?categoryId=${category_id}`);
       return response.data;
     }
    

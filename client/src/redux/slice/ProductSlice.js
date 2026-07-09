@@ -6,6 +6,7 @@ import {
   addProduct,
   updateProduct,
 } from "../../api/ProductsApi";
+import { getCategoryById } from "../../api/categoryApi";
 
 const productSlice = createSlice({
   name: "products",
@@ -34,6 +35,12 @@ const productSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(getProducts.fulfilled, (state, action) => {
+      state.products = action.payload.products;
+      state.totalPages = action.payload.totalPages;
+      state.totalProducts = action.payload.totalProducts;
+    });
+
+    builder.addCase(getCategoryById.fulfilled, (state, action) => {
       state.products = action.payload.products;
       state.totalPages = action.payload.totalPages;
       state.totalProducts = action.payload.totalProducts;

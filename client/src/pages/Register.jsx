@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { registerUser } from "../api/LoginApi";
 import { Link } from "react-router-dom";
-
+import Swal from "sweetalert2";
 const Register = () => {
 
   const dispatch = useDispatch()
@@ -13,6 +13,12 @@ const Register = () => {
 
   const onSubmit = async (data) => {
     dispatch(registerUser({ ...data, role: "User" }));
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "success",
+      title: "Register successfully",
+    });
     reset();
   };
  

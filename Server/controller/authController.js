@@ -5,7 +5,7 @@ const { generateToken } = require('../utils/Jwt');
 
 const register = async (req, res) => {
     let { name, email, password, role } = req.body;
-    console.log(req.body);
+  
 
     if (!role) {
         role = "User";
@@ -40,7 +40,7 @@ const register = async (req, res) => {
    
 
      const test = await Pool.query("SELECT NOW()");
-  console.log("DB Connected:", test.rows);
+  
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
@@ -50,15 +50,15 @@ const register = async (req, res) => {
       `SELECT * FROM users WHERE email = $1`,
       [email]
     );
-      console.log("result:",result)
+    
     const user = result.rows[0];
-    console.log("user:",user)
+  
     if (!user) {
       return res.status(404).json({ message: "Invalid user Name" });
     }
 
     const match = await bcrypt.compare(password, user.password);
-       console.log("match:",match)
+      
     if (!match) {
       return res.status(400).json({ message: "Invalid password" });
     }

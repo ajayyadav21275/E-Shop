@@ -3,23 +3,27 @@ const fs = require("fs");
 const path = require("path");
 
 const createCategory = async (req,res)=>{
-  const {name,slug,description}= req.body || {};
+  const {name,slug,description,parentCategory}= req.body || {};
+  const parent_id = parentCategory && parentCategory !== "null"? Number(parentCategory) : null;
+  
  const image = req.file ? req.file.filename : null;
-   
+ 
 
     try{
      const result = await Pool.query(
-         `INSERT INTO categories (name,slug,image,description) VALUES ($1,$2,$3,$4) RETURNING *`,
-         [name, slug, image, description]
+         `INSERT INTO categories (name,slug,image,description,parent_id) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+         [name, slug, image, description, parent_id]
      );
      res.status(201).json(result.rows[0]);
     }
     catch(err){
+        console.log(err);
         res.status(500).json({error:"Internal server error"});
     
     }
 }
 const getAllCategories = async (req,res)=>{
+    
     try{
         const result = await Pool.query(`SELECT *FROM categories ORDER BY ID DESC`);
         res.status(200).json(result.rows);
@@ -31,7 +35,9 @@ const getAllCategories = async (req,res)=>{
 }
 
 const getCategoryById = async (req, res) => {
+
     const id = req.params.id || null;
+    
     const name= req.body || null
  
     try {
@@ -58,9 +64,7 @@ const updateCategories = async (req, res) => {
   const newImage = req.file ? req.file.filename : null;
 
   try {
-    console.log("id:",id)
-    console.log(req.body)
-    console.log(newImage)
+   
     const oldCategory = await Pool.query(
       `SELECT * FROM categories WHERE id = $1`,
       [id]
@@ -161,13 +165,18 @@ const deleteCategories = async (req,res)=>{
     }
 };
 
-const getProductsByCategory = async (req,res) =>{
-    const id = req.params.id;
+const getParentByCategory = async (req,res) =>{
+    const parent_id = Number(req.params.id);
+    
+    
+
     try{
-        const result = await Pool.query(`SELECT *FROM products WHERE category_id = $1`,[id]);
+        const result = await Pool.query(`SELECT *FROM categories WHERE parent_id = $1`,[parent_id]);
         res.status(200).json(result.rows);
+        console.log("result:", result.rows);
     }
     catch(err){
+      console.log(err)
         res.status(500).json({error:"Internal server error"});
     }
 }
@@ -176,7 +185,7 @@ module.exports = {
   createCategory,
   getAllCategories,
   getCategoryById,
-  getProductsByCategory,
+  getParentByCategory,
   updateCategories,
   deleteCategories,
 };
