@@ -1,6 +1,6 @@
 const Pool = require("../config/db");
 
-const AddToWishlist = async (req, res) => {
+const addToWishlist = async (req, res) => {
     const userId = req.user.id;
     const { productId } = req.params;
 
@@ -35,7 +35,7 @@ const AddToWishlist = async (req, res) => {
 };
 
 
-const GetWishlist = async (req, res) => {
+const getWishlist = async (req, res) => {
     const userId = req.user.id;
 
     try {
@@ -74,7 +74,7 @@ const GetWishlist = async (req, res) => {
 };
 
 
-const RemoveFromWishlist = async (req,res) =>{
+const removeFromWishlist = async (req,res) =>{
     const userId = req.user.id;
     const productId = req.params.id;
     try{
@@ -92,4 +92,4 @@ const RemoveFromWishlist = async (req,res) =>{
      }
 }
 
-module.exports = { AddToWishlist, GetWishlist, RemoveFromWishlist };
+module.exports = { addToWishlist, getWishlist, removeFromWishlist };

@@ -1,10 +1,11 @@
 let express = require("express");
+const { addToWishlist, getWishlist, removeFromWishlist } = require("../controller/wishlistController");
 let WishlistRouter = express.Router();
 
 
- let {AddToWishlist, RemoveFromWishlist, GetWishlist} = require("../controller/WishlistController");
-  WishlistRouter.post("/add/:productId", AddToWishlist);
-  WishlistRouter.get("/", GetWishlist);
-  WishlistRouter.delete("/remove/:id", RemoveFromWishlist);
+ 
+  WishlistRouter.post("/add/:productId",addToWishlist  );
+  WishlistRouter.get("/",getWishlist );
+  WishlistRouter.delete("/remove/:id",removeFromWishlist );
 
   module.exports = WishlistRouter; 
